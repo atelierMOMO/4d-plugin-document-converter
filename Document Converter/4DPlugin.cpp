@@ -16,27 +16,19 @@ void PluginMain(PA_long32 selector, PA_PluginParameters params)
 {
 	try
 	{
-		PA_long32 pProcNum = selector;
-		sLONG_PTR *pResult = (sLONG_PTR *)params->fResult;
-		PackagePtr pParams = (PackagePtr)params->fParameters;
+            switch(selector)
+            {
+        // --- Document Converter
 
-		CommandDispatcher(pProcNum, pResult, pParams); 
+                case 1 :
+                    Convert_document(params);
+                break;
+
+            }
+
 	}
 	catch(...)
 	{
-
-	}
-}
-
-void CommandDispatcher (PA_long32 pProcNum, sLONG_PTR *pResult, PackagePtr pParams)
-{
-	switch(pProcNum)
-	{
-// --- Document Converter
-
-		case 1 :
-			Convert_document(pResult, pParams);
-			break;
 
 	}
 }
@@ -331,14 +323,15 @@ void parseData(ConverterContext *context)
 
 #pragma mark -
 
-void Convert_document(sLONG_PTR *pResult, PackagePtr pParams)
+void Convert_document(PA_PluginParameters params)
 {
 	@autoreleasepool
 	{
-		int src_fmt = *(int *)(pParams[1]); //Param2
-		int dst_fmt = *(int *)(pParams[2]); //Param3
+        int src_fmt = PA_GetLongParameter(params, 2);
+        int dst_fmt = PA_GetLongParameter(params, 3);
+        
+        PA_Handle hParam1 = PA_GetBlobHandleParameter(params, 1);
 		
-		PA_Handle hParam1 = *(PA_Handle *)(pParams[0]);
 		if(hParam1)
 		{
 			NSData *src = [[NSData alloc]initWithBytes:PA_LockHandle(hParam1) length:PA_GetHandleSize(hParam1)];
@@ -404,7 +397,10 @@ void Convert_document(sLONG_PTR *pResult, PackagePtr pParams)
 				
 				//custom option for src and dst
 				C_TEXT Param4;
+                sLONG_PTR *pResult = (sLONG_PTR *)params->fResult;
+                PackagePtr pParams = (PackagePtr)params->fParameters;
 				Param4.fromParamAtIndex(pParams, 4);
+                
 				JSONNODE *json = json_parse_text_param(Param4);
 				//json_stringify(json, NO);
 				
@@ -496,11 +492,7 @@ void Convert_document(sLONG_PTR *pResult, PackagePtr pParams)
 				{
 					if([dst length])
 					{
-						PA_Handle *hReturnValue = (PA_Handle *)pResult;
-						PA_Handle d = PA_NewHandle((PA_long32)[dst length]);
-						PA_MoveBlock((char *)[dst bytes], PA_LockHandle(d), (unsigned int)[dst length]);
-						PA_UnlockHandle(d);
-						*hReturnValue = d;
+                        PA_ReturnBlob(params, (void *)[dst bytes], [dst length]);
 					}//dst.length
 					
 				}//dst (we don't own this object, don't release it)

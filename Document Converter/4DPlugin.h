@@ -9,7 +9,7 @@
  # --------------------------------------------------------------------------------*/
 
 // --- Document Converter
-void Convert_document(sLONG_PTR *pResult, PackagePtr pParams);
+void Convert_document(PA_PluginParameters params);
 
 #define Document_format_TXT 0
 #define Document_format_RTF 1
